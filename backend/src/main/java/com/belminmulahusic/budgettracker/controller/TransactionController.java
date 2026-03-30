@@ -33,9 +33,12 @@ public class TransactionController {
             @RequestParam(required = false) TransactionType type,
             @RequestParam(required = false) Category category,
             @RequestParam(required = false) LocalDate startDate,
-            @RequestParam(required = false) LocalDate endDate
+            @RequestParam(required = false) LocalDate endDate,
+            @RequestParam(required = false) String month,
+            @RequestParam(defaultValue = "date") String sortBy,
+            @RequestParam(defaultValue = "desc") String direction
     ) {
-        return transactionService.getAll(type, category, startDate, endDate);
+        return transactionService.getAll(type, category, startDate, endDate, month, sortBy, direction);
     }
 
     @GetMapping("/{id}")

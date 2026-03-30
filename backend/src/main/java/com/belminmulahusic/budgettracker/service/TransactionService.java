@@ -11,8 +11,10 @@ import com.belminmulahusic.budgettracker.util.TransactionType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Sort;
 import com.belminmulahusic.budgettracker.util.Category;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 
 @Service
@@ -41,8 +43,17 @@ public class TransactionService {
     public List<TransactionResponse> getAll(TransactionType type,
                                             Category category,
                                             LocalDate startDate,
-                                            LocalDate endDate) {
+                                            LocalDate endDate,
+                                            String month,
+                                            String sortBy,
+                                            String direction) {
         User currentUser = getCurrentUser();
+
+        if (month != null && !month.isBlank()) {
+            YearMonth yearMonth = YearMonth.parse(month);
+            startDate = yearMonth.atDay(1);
+            endDate = yearMonth.atEndOfMonth();
+        }
 
         var specification = org.springframework.data.jpa.domain.Specification
                 .where(TransactionSpecifications.hasUser(currentUser))
@@ -51,10 +62,20 @@ public class TransactionService {
                 .and(TransactionSpecifications.dateGreaterThanOrEqualTo(startDate))
                 .and(TransactionSpecifications.dateLessThanOrEqualTo(endDate));
 
-        return transactionRepository.findAll(specification)
+        String safeSortBy;
+        if ("amount".equalsIgnoreCase(sortBy)) {
+            safeSortBy = "amount";
+        } else {
+            safeSortBy = "date";
+        }
+
+        Sort.Direction sortDirection = "asc".equalsIgnoreCase(direction)
+                ? Sort.Direction.ASC
+                : Sort.Direction.DESC;
+
+        return transactionRepository.findAll(specification, Sort.by(sortDirection, safeSortBy))
                 .stream()
                 .map(this::mapToResponse)
-                .sorted((a, b) -> b.date().compareTo(a.date()))
                 .toList();
     }
 
