@@ -9,6 +9,7 @@ import com.belminmulahusic.budgettracker.repository.UserRepository;
 import com.belminmulahusic.budgettracker.util.TransactionType;
 import com.belminmulahusic.budgettracker.dto.transaction.CategorySummaryResponse;
 import com.belminmulahusic.budgettracker.dto.transaction.MonthlySummaryResponse;
+import com.belminmulahusic.budgettracker.exception.ResourceNotFoundException;
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.Map;
@@ -88,7 +89,7 @@ public class TransactionService {
         User currentUser = getCurrentUser();
 
         Transaction transaction = transactionRepository.findByIdAndUser(id, currentUser)
-                .orElseThrow(() -> new RuntimeException("Transaction not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
 
         return mapToResponse(transaction);
     }
@@ -97,7 +98,7 @@ public class TransactionService {
         User currentUser = getCurrentUser();
 
         Transaction transaction = transactionRepository.findByIdAndUser(id, currentUser)
-                .orElseThrow(() -> new RuntimeException("Transaction not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
 
         transactionRepository.delete(transaction);
     }
@@ -106,7 +107,7 @@ public class TransactionService {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
 
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
     }
 
     private TransactionResponse mapToResponse(Transaction transaction) {
@@ -124,7 +125,7 @@ public class TransactionService {
         User currentUser = getCurrentUser();
 
         Transaction transaction = transactionRepository.findByIdAndUser(id, currentUser)
-                .orElseThrow(() -> new RuntimeException("Transaction not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
 
         transaction.setAmount(request.amount());
         transaction.setType(request.type());
