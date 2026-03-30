@@ -79,4 +79,20 @@ public class TransactionService {
                 transaction.getDescription()
         );
     }
+
+    public TransactionResponse update(Long id, TransactionRequest request) {
+        User currentUser = getCurrentUser();
+
+        Transaction transaction = transactionRepository.findByIdAndUser(id, currentUser)
+                .orElseThrow(() -> new RuntimeException("Transaction not found"));
+
+        transaction.setAmount(request.amount());
+        transaction.setType(request.type());
+        transaction.setCategory(request.category());
+        transaction.setDate(request.date());
+        transaction.setDescription(request.description());
+
+        Transaction updatedTransaction = transactionRepository.save(transaction);
+        return mapToResponse(updatedTransaction);
+    }
 }

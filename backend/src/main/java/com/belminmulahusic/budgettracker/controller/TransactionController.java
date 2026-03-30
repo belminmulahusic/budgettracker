@@ -39,4 +39,10 @@ public class TransactionController {
     public void delete(@PathVariable Long id) {
         transactionService.delete(id);
     }
+
+    @PutMapping("/{id}")
+    public TransactionResponse update(@PathVariable Long id,
+                                    @Valid @RequestBody TransactionRequest request) {
+        return transactionService.update(id, request);
+    }
 }
