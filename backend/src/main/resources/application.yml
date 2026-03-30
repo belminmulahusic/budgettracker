@@ -3,7 +3,7 @@ spring:
     name: budgettracker
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/budget_tracker
+    url: jdbc:postgresql://postgres:5432/budget_tracker
     username: postgres
     password: postgres
     driver-class-name: org.postgresql.Driver
