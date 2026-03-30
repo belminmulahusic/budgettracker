@@ -7,7 +7,12 @@ import com.belminmulahusic.budgettracker.entity.User;
 import com.belminmulahusic.budgettracker.repository.TransactionRepository;
 import com.belminmulahusic.budgettracker.repository.UserRepository;
 import com.belminmulahusic.budgettracker.util.TransactionType;
-
+import com.belminmulahusic.budgettracker.dto.transaction.CategorySummaryResponse;
+import com.belminmulahusic.budgettracker.dto.transaction.MonthlySummaryResponse;
+import java.math.BigDecimal;
+import java.util.Comparator;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -129,5 +134,93 @@ public class TransactionService {
 
         Transaction updatedTransaction = transactionRepository.save(transaction);
         return mapToResponse(updatedTransaction);
+    }
+
+    public Map<String, BigDecimal> getOverallSummary() {
+        User currentUser = getCurrentUser();
+
+        var specification = org.springframework.data.jpa.domain.Specification
+                .where(TransactionSpecifications.hasUser(currentUser));
+
+        List<Transaction> transactions = transactionRepository.findAll(specification);
+
+        BigDecimal totalIncome = transactions.stream()
+                .filter(transaction -> transaction.getType() == TransactionType.INCOME)
+                .map(Transaction::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal totalExpenses = transactions.stream()
+                .filter(transaction -> transaction.getType() == TransactionType.EXPENSE)
+                .map(Transaction::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal balance = totalIncome.subtract(totalExpenses);
+
+        return Map.of(
+                "totalIncome", totalIncome,
+                "totalExpenses", totalExpenses,
+                "balance", balance
+        );
+    }
+
+    public MonthlySummaryResponse getMonthlySummary(String month) {
+        YearMonth yearMonth = YearMonth.parse(month);
+        LocalDate startDate = yearMonth.atDay(1);
+        LocalDate endDate = yearMonth.atEndOfMonth();
+
+        List<TransactionResponse> transactions = getAll(
+                null,
+                null,
+                startDate,
+                endDate,
+                null,
+                "date",
+                "desc"
+        );
+
+        BigDecimal totalIncome = transactions.stream()
+                .filter(transaction -> transaction.type() == TransactionType.INCOME)
+                .map(TransactionResponse::amount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal totalExpenses = transactions.stream()
+                .filter(transaction -> transaction.type() == TransactionType.EXPENSE)
+                .map(TransactionResponse::amount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal balance = totalIncome.subtract(totalExpenses);
+
+        return new MonthlySummaryResponse(
+                month,
+                totalIncome,
+                totalExpenses,
+                balance
+        );
+    }
+
+    public List<CategorySummaryResponse> getSummaryByCategory(TransactionType type) {
+        List<TransactionResponse> transactions = getAll(
+                type,
+                null,
+                null,
+                null,
+                null,
+                "amount",
+                "desc"
+        );
+
+        return transactions.stream()
+                .collect(Collectors.groupingBy(
+                        TransactionResponse::category,
+                        Collectors.mapping(
+                                TransactionResponse::amount,
+                                Collectors.reducing(BigDecimal.ZERO, BigDecimal::add)
+                        )
+                ))
+                .entrySet()
+                .stream()
+                .map(entry -> new CategorySummaryResponse(entry.getKey(), entry.getValue()))
+                .sorted(Comparator.comparing(CategorySummaryResponse::total).reversed())
+                .toList();
     }
 }

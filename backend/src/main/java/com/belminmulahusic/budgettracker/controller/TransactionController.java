@@ -1,5 +1,7 @@
 package com.belminmulahusic.budgettracker.controller;
 
+import com.belminmulahusic.budgettracker.dto.transaction.CategorySummaryResponse;
+import com.belminmulahusic.budgettracker.dto.transaction.MonthlySummaryResponse;
 import com.belminmulahusic.budgettracker.dto.transaction.TransactionRequest;
 import com.belminmulahusic.budgettracker.dto.transaction.TransactionResponse;
 import com.belminmulahusic.budgettracker.service.TransactionService;
@@ -11,8 +13,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/transactions")
@@ -56,5 +60,20 @@ public class TransactionController {
     public TransactionResponse update(@PathVariable Long id,
                                     @Valid @RequestBody TransactionRequest request) {
         return transactionService.update(id, request);
+    }
+
+    @GetMapping("/summary")
+    public Map<String, BigDecimal> getSummary() {
+        return transactionService.getOverallSummary();
+    }
+
+    @GetMapping("/summary/monthly")
+    public MonthlySummaryResponse getMonthlySummary(@RequestParam String month) {
+        return transactionService.getMonthlySummary(month);
+    }
+
+    @GetMapping("/summary/by-category")
+    public List<CategorySummaryResponse> getSummaryByCategory(@RequestParam TransactionType type) {
+        return transactionService.getSummaryByCategory(type);
     }
 }
