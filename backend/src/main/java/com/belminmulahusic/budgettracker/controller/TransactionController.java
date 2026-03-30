@@ -3,11 +3,15 @@ package com.belminmulahusic.budgettracker.controller;
 import com.belminmulahusic.budgettracker.dto.transaction.TransactionRequest;
 import com.belminmulahusic.budgettracker.dto.transaction.TransactionResponse;
 import com.belminmulahusic.budgettracker.service.TransactionService;
+import com.belminmulahusic.budgettracker.util.TransactionType;
+import com.belminmulahusic.budgettracker.util.Category;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -25,8 +29,13 @@ public class TransactionController {
     }
 
     @GetMapping
-    public List<TransactionResponse> getAll() {
-        return transactionService.getAll();
+    public List<TransactionResponse> getAll(
+            @RequestParam(required = false) TransactionType type,
+            @RequestParam(required = false) Category category,
+            @RequestParam(required = false) LocalDate startDate,
+            @RequestParam(required = false) LocalDate endDate
+    ) {
+        return transactionService.getAll(type, category, startDate, endDate);
     }
 
     @GetMapping("/{id}")

@@ -6,10 +6,13 @@ import com.belminmulahusic.budgettracker.entity.Transaction;
 import com.belminmulahusic.budgettracker.entity.User;
 import com.belminmulahusic.budgettracker.repository.TransactionRepository;
 import com.belminmulahusic.budgettracker.repository.UserRepository;
+import com.belminmulahusic.budgettracker.util.TransactionType;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-
+import com.belminmulahusic.budgettracker.util.Category;
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -35,12 +38,23 @@ public class TransactionService {
         return mapToResponse(savedTransaction);
     }
 
-    public List<TransactionResponse> getAll() {
+    public List<TransactionResponse> getAll(TransactionType type,
+                                            Category category,
+                                            LocalDate startDate,
+                                            LocalDate endDate) {
         User currentUser = getCurrentUser();
 
-        return transactionRepository.findAllByUserOrderByDateDesc(currentUser)
+        var specification = org.springframework.data.jpa.domain.Specification
+                .where(TransactionSpecifications.hasUser(currentUser))
+                .and(TransactionSpecifications.hasType(type))
+                .and(TransactionSpecifications.hasCategory(category))
+                .and(TransactionSpecifications.dateGreaterThanOrEqualTo(startDate))
+                .and(TransactionSpecifications.dateLessThanOrEqualTo(endDate));
+
+        return transactionRepository.findAll(specification)
                 .stream()
                 .map(this::mapToResponse)
+                .sorted((a, b) -> b.date().compareTo(a.date()))
                 .toList();
     }
 
