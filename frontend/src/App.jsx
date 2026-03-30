@@ -1,11 +1,14 @@
+import { Navigate, Route, Routes } from 'react-router-dom'
+import LoginPage from './pages/LoginPage'
+import RegisterPage from './pages/RegisterPage'
+
 function App() {
   return (
-    <div className="min-h-screen bg-slate-100 flex items-center justify-center">
-      <div className="bg-white shadow-md rounded-xl p-8 w-full max-w-md text-center">
-        <h1 className="text-3xl font-bold text-slate-800 mb-2">Budget Tracker</h1>
-        <p className="text-slate-600">Frontend setup is working.</p>
-      </div>
-    </div>
+    <Routes>
+      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+    </Routes>
   )
 }
 
