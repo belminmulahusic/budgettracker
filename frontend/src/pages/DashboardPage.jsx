@@ -1,14 +1,22 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import SummaryCard from '../components/SummaryCard'
+import TransactionFilters from '../components/TransactionFilters'
 import TransactionForm from '../components/TransactionForm'
 import TransactionTable from '../components/TransactionTable'
 import { getEmail, logout } from '../services/auth'
 import {
   createTransaction,
+  deleteTransaction,
   getSummary,
   getTransactions,
 } from '../services/transactionService'
+
+const initialFilters = {
+  type: '',
+  category: '',
+  month: '',
+}
 
 export default function DashboardPage() {
   const navigate = useNavigate()
@@ -21,6 +29,7 @@ export default function DashboardPage() {
   })
 
   const [transactions, setTransactions] = useState([])
+  const [filters, setFilters] = useState(initialFilters)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -29,14 +38,19 @@ export default function DashboardPage() {
     navigate('/login')
   }
 
-  async function loadDashboard() {
+  async function loadDashboard(activeFilters = filters) {
     try {
       setLoading(true)
       setError('')
 
+      const params = {}
+      if (activeFilters.type) params.type = activeFilters.type
+      if (activeFilters.category) params.category = activeFilters.category
+      if (activeFilters.month) params.month = activeFilters.month
+
       const [summaryData, transactionData] = await Promise.all([
         getSummary(),
-        getTransactions(),
+        getTransactions(params),
       ])
 
       setSummary(summaryData)
@@ -57,9 +71,28 @@ export default function DashboardPage() {
     await loadDashboard()
   }
 
+  async function handleDeleteTransaction(id) {
+    await deleteTransaction(id)
+    await loadDashboard()
+  }
+
+  function handleFilterChange(event) {
+    const { name, value } = event.target
+    const updatedFilters = {
+      ...filters,
+      [name]: value,
+    }
+
+    setFilters(updatedFilters)
+  }
+
+  function handleResetFilters() {
+    setFilters(initialFilters)
+  }
+
   useEffect(() => {
-    loadDashboard()
-  }, [])
+    loadDashboard(filters)
+  }, [filters])
 
   function formatCurrency(value) {
     return new Intl.NumberFormat('de-DE', {
@@ -120,7 +153,16 @@ export default function DashboardPage() {
 
             <TransactionForm onCreate={handleCreateTransaction} />
 
-            <TransactionTable transactions={transactions} />
+            <TransactionFilters
+              filters={filters}
+              onChange={handleFilterChange}
+              onReset={handleResetFilters}
+            />
+
+            <TransactionTable
+              transactions={transactions}
+              onDelete={handleDeleteTransaction}
+            />
           </>
         )}
       </div>

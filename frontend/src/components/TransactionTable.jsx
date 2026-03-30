@@ -9,13 +9,20 @@ function formatDate(value) {
   return new Date(value).toLocaleDateString('de-DE')
 }
 
-export default function TransactionTable({ transactions }) {
+export default function TransactionTable({ transactions, onDelete }) {
   if (!transactions.length) {
     return (
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
         <p className="text-slate-600">No transactions yet.</p>
       </div>
     )
+  }
+
+  function handleDelete(id) {
+    const confirmed = window.confirm('Delete this transaction?')
+    if (confirmed) {
+      onDelete(id)
+    }
   }
 
   return (
@@ -25,7 +32,7 @@ export default function TransactionTable({ transactions }) {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[700px]">
+        <table className="w-full min-w-[820px]">
           <thead className="bg-slate-50">
             <tr className="text-left text-sm text-slate-600">
               <th className="px-6 py-3 font-medium">Date</th>
@@ -58,6 +65,14 @@ export default function TransactionTable({ transactions }) {
                 <td className="px-6 py-4">{transaction.description || '-'}</td>
                 <td className="px-6 py-4 text-right font-medium">
                   {formatCurrency(transaction.amount)}
+                </td>
+                <td className="px-6 py-4 text-right">
+                  <button
+                    onClick={() => handleDelete(transaction.id)}
+                    className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 transition"
+                  >
+                    Delete
+                  </button>
                 </td>
               </tr>
             ))}
